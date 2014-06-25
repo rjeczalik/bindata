@@ -182,4 +182,60 @@ format is specified at build time with the appropriate tags.
 The tags are appended to a `// +build` line in the beginning of the output file
 and must follow the build tags syntax specified by the go tool.
 
+### Automagic conversion within `$GOPATH` workspace
+
+When no input files nor directories are provided via command line flags,
+go-bindata reads `$GOPATH` workspaces and attempts to convert all files it
+finds recursively in `$GOPATH/data`, generating a bindata.go file in a matching
+`$GOPATH/src` directory. The match is always the longest path diff between
+`$GOPATH/data` and `$GOPATH/src`, in order to avoid having assets which content
+overlaps. For example, running:
+
+```bash
+  ~ $ GOPATH=/home/user go-bindata
+```
+
+over the following $GOPATH workspace:
+
+```bash
+  /home/user
+  ├── data
+  │   ├── bitbucket.org
+  │   │   └── user
+  │   │       └── hidden
+  │   │           └── subpackage
+  │   │               ├── aws.txt
+  │   │               └── pass.txt
+  │   └── github.com
+  │       └── user
+  │           └── example
+  │               └── assets
+  │                   ├── css
+  │                   │   └── default.css
+  │                   └── js
+  │                       ├── app.js
+  │                       └── link.js
+  └── src
+      ├── bitbucket.org
+      │   └── user
+      │       └── hidden
+      │           ├── hidden.go
+      │           └── subpackage
+      │               └── subpackage.go
+      └── github.com
+          └── user
+              └── example
+                  └── example.go
+```
+
+will create two asset files under the following paths:
+
+```bash
+  ~ $ GOPATH=/home/user go-bindata
+  ok      bitbucket.org/user/hidden/subpackage    (/home/user/src/bitbucket.org/user/hidden/subpackage/bindata.go)       0.001s
+  ok      github.com/user/example (/home/user/src/github.com/user/example/bindata.go)    0.002s
+```
+
+Running go-bindata in this mode will ignore any values passed by `-o`, `-pkg` and
+`-prefix` flags.
 

@@ -7,32 +7,72 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/jteeuwen/go-bindata"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/jteeuwen/go-bindata"
 )
 
-func main() {
-	cfg := parseArgs()
-	err := bindata.Translate(cfg)
+func die(err error) {
+	fmt.Fprintf(os.Stderr, "bindata: %v\n", err)
+	os.Exit(1)
+}
 
+var data = string(os.PathSeparator) + "data" + string(os.PathSeparator)
+
+func log(c *bindata.Config, d time.Duration, err error) {
+	prefix := c.Input[0].Path
+	if i := strings.Index(prefix, data); i != -1 {
+		prefix = prefix[i+len(data):]
+	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bindata: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "fail\t%s\t(%s)\t%.3fs\n\terror: %v\n",
+			prefix, c.Output, d.Seconds(), err)
+	} else {
+		fmt.Printf("ok\t%s\t(%s)\t%.3fs\n", prefix, c.Output, d.Seconds())
 	}
 }
 
-// parseArgs create s a new, filled configuration instance
+func copycfg(dst, src *bindata.Config) {
+	dst.Tags = src.Tags
+	dst.NoMemCopy = src.NoMemCopy
+	dst.NoCompress = src.NoCompress
+	dst.Debug = src.Debug
+	dst.Ignore = src.Ignore
+}
+
+func main() {
+	c, auto := parseArgs()
+	if auto {
+		cfgs, err := bindata.Glob(os.Getenv("GOPATH"))
+		if err != nil {
+			die(err)
+		}
+		for _, cfg := range cfgs {
+			copycfg(cfg, c)
+		}
+		if !bindata.GlobTranslate(cfgs, log) {
+			os.Exit(1)
+		}
+		return
+	}
+	if err := bindata.Translate(c); err != nil {
+		die(err)
+	}
+}
+
+// parseArgs creates a new, filled configuration instance
 // by reading and parsing command line options.
 //
 // This function exits the program with an error, if
 // any of the command line options are incorrect.
-func parseArgs() *bindata.Config {
+func parseArgs() (c *bindata.Config, auto bool) {
 	var version bool
 
-	c := bindata.NewConfig()
+	c = bindata.NewConfig()
 
 	flag.Usage = func() {
 		fmt.Printf("Usage: %s [options] <input directories>\n\n", os.Args[0])
@@ -53,22 +93,19 @@ func parseArgs() *bindata.Config {
 
 	flag.Parse()
 
-	patterns := make([]*regexp.Regexp, 0)
 	for _, pattern := range ignore {
-		patterns = append(patterns, regexp.MustCompile(pattern))
+		c.Ignore = append(c.Ignore, regexp.MustCompile(pattern))
 	}
-	c.Ignore = patterns
 
 	if version {
 		fmt.Printf("%s\n", Version())
 		os.Exit(0)
 	}
 
-	// Make sure we have input paths.
+	// No input directories provided, assuming automatic mode.
 	if flag.NArg() == 0 {
-		fmt.Fprintf(os.Stderr, "Missing <input dir>\n\n")
-		flag.Usage()
-		os.Exit(1)
+		auto = true
+		return
 	}
 
 	// Create input configurations.
@@ -77,7 +114,7 @@ func parseArgs() *bindata.Config {
 		c.Input[i] = parseInput(flag.Arg(i))
 	}
 
-	return c
+	return
 }
 
 // parseRecursive determines whether the given path has a recrusive indicator and
