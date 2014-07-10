@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jteeuwen/go-bindata"
+	"github.com/rjeczalik/bindata"
 )
 
 func die(err error) {
