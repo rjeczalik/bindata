@@ -159,7 +159,7 @@ func Glob(list string) ([]*Config, error) {
 		if countdir(input) > 0 {
 			cfg := NewConfig()
 			cfg.Package = filepath.Base(inout.dir)
-			cfg.Prefix = filepath.Join(inout.gopath, "data")
+			cfg.Prefix = filepath.Join(inout.gopath, "data", inout.dir)
 			cfg.Output = output
 			cfg.Input = []InputConfig{{Path: input, Recursive: true}}
 			cfgs = append(cfgs, cfg)
