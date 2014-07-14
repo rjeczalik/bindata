@@ -1,6 +1,8 @@
 bindata [![GoDoc](https://godoc.org/github.com/rjeczalik/bindata?status.png)](https://godoc.org/github.com/rjeczalik/bindata) [![Build Status](https://travis-ci.org/rjeczalik/bindata.png?branch=master)](https://travis-ci.org/rjeczalik/bindata)
 =======
 
+*`bindata` is a fork of [jteeuwen/go-bindata](https://github.com/jteeuwen/go-bindata) by [jteeuwen](https://github.com/jteeuwen) branched off at [d3feb9534c](https://github.com/rjeczalik/bindata/commit/d3feb9534ca8703000a19f08ffae766d2958d7d6) with changes not meant to be pushed to the upstream repository.*
+
 This package converts any file into managable Go source code. Useful for
 embedding binary data into a Go program. The file data is optionally gzip
 compressed before being converted to a raw byte slice.
