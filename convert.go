@@ -85,7 +85,7 @@ func Generate(c *Config) (err error) {
 
 	// Format generated file with gofmt if applicable.
 	if c.Fmt {
-		if err = exec.Command("gofmt", "-w", c.Output).Run(); err != nil {
+		if err = exec.Command("gofmt", "-w", "-s", c.Output).Run(); err != nil {
 			return
 		}
 	}
