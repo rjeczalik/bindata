@@ -42,6 +42,7 @@ func copycfg(dst, src *bindata.Config) {
 	dst.NoCompress = src.NoCompress
 	dst.Debug = src.Debug
 	dst.Ignore = src.Ignore
+	dst.Fmt = src.Fmt
 }
 
 func main() {
@@ -54,12 +55,12 @@ func main() {
 		for _, cfg := range cfgs {
 			copycfg(cfg, c)
 		}
-		if !bindata.GlobTranslate(cfgs, log) {
+		if !bindata.GlobGenerate(cfgs, log) {
 			os.Exit(1)
 		}
 		return
 	}
-	if err := bindata.Translate(c); err != nil {
+	if err := bindata.Generate(c); err != nil {
 		die(err)
 	}
 }
@@ -82,6 +83,7 @@ func parseArgs() (c *bindata.Config, auto bool) {
 	flag.BoolVar(&c.Debug, "debug", c.Debug, "Do not embed the assets, but provide the embedding API. Contents will still be loaded from disk.")
 	flag.StringVar(&c.Tags, "tags", c.Tags, "Optional set of build tags to include.")
 	flag.StringVar(&c.Prefix, "prefix", c.Prefix, "Optional path prefix to strip off asset names.")
+	flag.BoolVar(&c.Fmt, "fmt", c.Fmt, "Format generated file with gofmt command.")
 	flag.StringVar(&c.Package, "pkg", c.Package, "Package name to use in the generated code.")
 	flag.BoolVar(&c.NoMemCopy, "nomemcopy", c.NoMemCopy, "Use a .rodata hack to get rid of unnecessary memcopies. Refer to the documentation to see what implications this carries.")
 	flag.BoolVar(&c.NoCompress, "nocompress", c.NoCompress, "Assets will *not* be GZIP compressed when this flag is specified.")
@@ -117,7 +119,7 @@ func parseArgs() (c *bindata.Config, auto bool) {
 	return
 }
 
-// parseRecursive determines whether the given path has a recrusive indicator and
+// parseRecursive determines whether the given path has a recursive indicator and
 // returns a new path with the recursive indicator chopped off if it does.
 //
 //  ex:

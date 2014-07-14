@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -73,6 +74,22 @@ func Translate(c *Config) error {
 
 	// Write table of contents
 	return writeTOC(bfd, toc)
+}
+
+// Generate translates configured assets into Go code and performs additional
+// postprocessing if configured.
+func Generate(c *Config) (err error) {
+	if err = Translate(c); err != nil {
+		return
+	}
+
+	// Format generated file with gofmt if applicable.
+	if c.Fmt {
+		if err = exec.Command("gofmt", "-w", "-s", c.Output).Run(); err != nil {
+			return
+		}
+	}
+	return
 }
 
 // findFiles recursively finds all the file paths in the given directory tree.

@@ -55,6 +55,10 @@ type Config struct {
 	// 	go_bindata["templates/foo.html"] = templates_foo_html
 	Prefix string
 
+	// Fmt defines whether generated file should be formatted afterwards with
+	// gofmt command.
+	Fmt bool
+
 	// NoMemCopy will alter the way the output file is generated.
 	//
 	// It will employ a hack that allows us to read the file data directly from
