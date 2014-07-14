@@ -171,11 +171,11 @@ func Glob(list string) ([]*Config, error) {
 	return cfgs, nil
 }
 
-// GlobTranslate runs Translate concurrently over cfgs configuration list.
+// GlobGenerate runs Generate concurrently over cfgs configuration list.
 // It logs execution time and eventual errors via user-provided log function.
-// It returns true when all executions of Translate were successful,
+// It returns true when all executions of Generate were successful,
 // false otherwise.
-func GlobTranslate(cfgs []*Config, log func(*Config, time.Duration, error)) bool {
+func GlobGenerate(cfgs []*Config, log func(*Config, time.Duration, error)) bool {
 	ch, ret, ok := make(chan *Config, len(cfgs)), make(chan error), true
 	for _, cfg := range cfgs {
 		ch <- cfg
@@ -185,7 +185,7 @@ func GlobTranslate(cfgs []*Config, log func(*Config, time.Duration, error)) bool
 		go func() {
 			for c := range ch {
 				begin := time.Now()
-				err := Translate(c)
+				err := Generate(c)
 				log(c, time.Now().Sub(begin), err)
 				ret <- err
 			}
