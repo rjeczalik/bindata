@@ -22,7 +22,7 @@ func min(i, j int) int {
 	return j
 }
 
-func readdir(path string) ([]string, error) {
+func readdir(path string) (map[string]struct{}, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -42,10 +42,10 @@ func readdir(path string) ([]string, error) {
 	if len(fis) == 0 {
 		return nil, errors.New("empty directory")
 	}
-	dirs := make([]string, 0, len(fis))
+	dirs := make(map[string]struct{}, len(fis))
 	for _, fi = range fis {
 		if fi.IsDir() && filepath.Base(fi.Name())[0] != '.' {
-			dirs = append(dirs, fi.Name())
+			dirs[fi.Name()] = struct{}{}
 		}
 	}
 	if len(dirs) == 0 {
@@ -104,10 +104,11 @@ func Glob(list string) ([]*Config, error) {
 	}
 	type inout struct{ gopath, dir string }
 	var (
-		glob, data, src []string
-		inouts          []inout
-		dir             string
-		err             error
+		data, src map[string]struct{}
+		glob      []string
+		inouts    []inout
+		dir       string
+		err       error
 	)
 	for _, path := range paths {
 		glob = append(glob, "")
@@ -122,15 +123,17 @@ func Glob(list string) ([]*Config, error) {
 				continue
 			}
 			m := make(map[string]uint8, min(len(data), len(src)))
-			for _, dir := range data {
+			for dir := range data {
 				m[dir]++
 			}
-			for _, dir := range src {
+			for dir := range src {
 				m[dir]++
 			}
 			for name, n := range m {
 				if n > 1 {
 					glob = append(glob, filepath.Join(dir, name))
+				} else if _, ok := data[name]; dir != "" && ok { // level-1 assets are ignored
+					inouts = append(inouts, inout{gopath: path, dir: filepath.Join(dir, name)})
 				}
 			}
 		}
