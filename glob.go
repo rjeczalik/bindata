@@ -133,7 +133,7 @@ func Glob(list string) ([]*Config, error) {
 				if n > 1 {
 					glob = append(glob, filepath.Join(dir, name))
 				} else if _, ok := data[name]; dir != "" && ok { // level-1 assets are ignored
-					inouts = append(inouts, inout{gopath: path, dir: filepath.Join(dir, name)})
+					inouts = append(inouts, inout{gopath: path, dir: dir})
 				}
 			}
 		}
