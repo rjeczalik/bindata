@@ -101,61 +101,48 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 		prefix, _ = filepath.Abs(prefix)
 		prefix = filepath.ToSlash(prefix)
 	}
-
-	fd, err := os.Open(dir)
+	f, err := os.Open(dir)
 	if err != nil {
 		return err
 	}
-
-	defer fd.Close()
-
-	list, err := fd.Readdir(0)
+	defer f.Close()
+	fis, err := f.Readdir(0)
 	if err != nil {
 		return err
 	}
-
-	for _, file := range list {
-		var asset Asset
-		asset.Path = filepath.Join(dir, file.Name())
-		asset.Name = filepath.ToSlash(asset.Path)
-
-		ignoring := false
+LOOP:
+	for _, fi := range fis {
+		path := filepath.Join(dir, fi.Name())
 		for _, re := range ignore {
-			if re.MatchString(asset.Path) {
-				ignoring = true
-				break
+			if re.MatchString(path) {
+				continue LOOP
 			}
 		}
-		if ignoring {
-			continue
-		}
-
-		if file.IsDir() {
-			if recursive {
-				findFiles(asset.Path, prefix, recursive, toc, ignore)
+		if fi.IsDir() {
+			if recursive && filepath.Base(fi.Name())[0] != '.' {
+				findFiles(path, prefix, recursive, toc, ignore)
 			}
-			continue
+			continue LOOP
 		}
-
+		asset := Asset{
+			Path: path,
+			Name: filepath.ToSlash(path),
+		}
 		if strings.HasPrefix(asset.Name, prefix) {
 			asset.Name = asset.Name[len(prefix):]
 		}
-
 		// If we have a leading slash, get rid of it.
 		if len(asset.Name) > 0 && asset.Name[0] == '/' {
 			asset.Name = asset.Name[1:]
 		}
-
 		// This shouldn't happen.
 		if len(asset.Name) == 0 {
 			return fmt.Errorf("Invalid file: %v", asset.Path)
 		}
-
 		asset.Func = safeFunctionName(asset.Name)
 		asset.Path, _ = filepath.Abs(asset.Path)
 		*toc = append(*toc, asset)
 	}
-
 	return nil
 }
 

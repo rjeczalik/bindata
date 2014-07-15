@@ -44,7 +44,7 @@ func readdir(path string) ([]string, error) {
 	}
 	dirs := make([]string, 0, len(fis))
 	for _, fi = range fis {
-		if fi.IsDir() {
+		if fi.IsDir() && filepath.Base(fi.Name())[0] != '.' {
 			dirs = append(dirs, fi.Name())
 		}
 	}
@@ -67,18 +67,6 @@ func countdir(path string) int {
 		return 0
 	}
 	return len(names)
-}
-
-var vcs = map[string]struct{}{
-	".bzr": {},
-	".git": {},
-	".hg":  {},
-	".svn": {},
-}
-
-func isvcs(name string) (ok bool) {
-	_, ok = vcs[name]
-	return ok
 }
 
 // Glob searches paths provided by a os.PathListSeparator-separated list. It looks
@@ -133,16 +121,12 @@ func Glob(list string) ([]*Config, error) {
 				inouts = append(inouts, inout{gopath: path, dir: dir})
 				continue
 			}
-			m := make(map[string]int, min(len(data), len(src)))
+			m := make(map[string]uint8, min(len(data), len(src)))
 			for _, dir := range data {
-				if !isvcs(dir) {
-					m[dir]++
-				}
+				m[dir]++
 			}
 			for _, dir := range src {
-				if !isvcs(dir) {
-					m[dir]++
-				}
+				m[dir]++
 			}
 			for name, n := range m {
 				if n > 1 {
@@ -166,7 +150,7 @@ func Glob(list string) ([]*Config, error) {
 		}
 	}
 	if len(cfgs) == 0 {
-		return nil, errors.New("bindata: no matching $GOPATH/data directories found or no input ones provided")
+		return nil, errors.New("no matching $GOPATH/data directories found or no input ones provided")
 	}
 	return cfgs, nil
 }
