@@ -1,4 +1,4 @@
-bindata [![GoDoc](https://godoc.org/github.com/rjeczalik/bindata?status.png)](https://godoc.org/github.com/rjeczalik/bindata) [![Build Status](https://travis-ci.org/rjeczalik/bindata.png?branch=master)](https://travis-ci.org/rjeczalik/bindata)
+bindata [![GoDoc](https://godoc.org/github.com/rjeczalik/bindata?status.png)](https://godoc.org/github.com/rjeczalik/bindata) [![Build Status](https://travis-ci.org/rjeczalik/bindata.png?branch=master)](https://travis-ci.org/rjeczalik/bindata)[![Build status](https://ci.appveyor.com/api/projects/status/hhcekadny0g2xw9l)](https://ci.appveyor.com/project/rjeczalik/bindata)
 =======
 
 *`bindata` is a fork of [jteeuwen/go-bindata](https://github.com/jteeuwen/go-bindata) by [jteeuwen](https://github.com/jteeuwen) branched off at [d3feb9534c](https://github.com/rjeczalik/bindata/commit/d3feb9534ca8703000a19f08ffae766d2958d7d6) with changes not meant to be pushed to the upstream repository.*
