@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/rjeczalik/tools/fs/fsutil"
 )
 
 const sep = string(os.PathListSeparator)
@@ -20,38 +22,6 @@ func min(i, j int) int {
 		return i
 	}
 	return j
-}
-
-func readdir(path string) (map[string]struct{}, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	if !fi.IsDir() {
-		return nil, errors.New("not a directory")
-	}
-	fis, err := f.Readdir(0)
-	if err != nil {
-		return nil, err
-	}
-	if len(fis) == 0 {
-		return nil, errors.New("empty directory")
-	}
-	dirs := make(map[string]struct{}, len(fis))
-	for _, fi = range fis {
-		if fi.IsDir() && filepath.Base(fi.Name())[0] != '.' {
-			dirs[fi.Name()] = struct{}{}
-		}
-	}
-	if len(dirs) == 0 {
-		return nil, errors.New("leaf directory")
-	}
-	return dirs, nil
 }
 
 func countdir(path string) int {
@@ -96,46 +66,19 @@ func countdir(path string) int {
 // the files would get read recursively from the "assets" directory and outputted
 // to the "./src/github.com/user/example/bindata.go" file.
 func Glob(list string) ([]*Config, error) {
-	var paths = make([]string, 0, strings.Count(list, sep)+1)
+	type inout struct{ gopath, dir string }
+	var (
+		inouts []inout
+		paths  = make([]string, 0, strings.Count(list, sep)+1)
+	)
 	for _, path := range strings.Split(list, sep) {
 		if path != "" {
 			paths = append(paths, path)
 		}
 	}
-	type inout struct{ gopath, dir string }
-	var (
-		data, src map[string]struct{}
-		glob      []string
-		inouts    []inout
-		dir       string
-		err       error
-	)
-	for _, path := range paths {
-		glob = append(glob, "")
-		for len(glob) > 0 {
-			dir, glob = glob[len(glob)-1], glob[:len(glob)-1]
-			if data, err = readdir(filepath.Join(path, "data", dir)); err != nil {
-				inouts = append(inouts, inout{gopath: path, dir: dir})
-				continue
-			}
-			if src, err = readdir(filepath.Join(path, "src", dir)); err != nil {
-				inouts = append(inouts, inout{gopath: path, dir: dir})
-				continue
-			}
-			m := make(map[string]uint8, min(len(data), len(src)))
-			for dir := range data {
-				m[dir]++
-			}
-			for dir := range src {
-				m[dir]++
-			}
-			for name, n := range m {
-				if n > 1 {
-					glob = append(glob, filepath.Join(dir, name))
-				} else if _, ok := data[name]; dir != "" && ok { // level-1 assets are ignored
-					inouts = append(inouts, inout{gopath: path, dir: dir})
-				}
-			}
+	for _, gopath := range paths {
+		for _, dir := range fsutil.Intersect(filepath.Join(gopath, "src"), filepath.Join(gopath, "data")) {
+			inouts = append(inouts, inout{gopath: gopath, dir: dir})
 		}
 	}
 	var cfgs = make([]*Config, 0, len(inouts))
