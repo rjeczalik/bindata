@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rjeczalik/tools/fs/fsutil"
+	"github.com/rjeczalik/fs/fsutil"
 )
 
 const sep = string(os.PathListSeparator)
